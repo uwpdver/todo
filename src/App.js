@@ -22,7 +22,7 @@ export default class App extends Component {
     this.state = loadState() || {
       todos: [],
       textValue: "",
-      queryString: "",
+      filteredResult: [],
       inputMode: InputMode.add,
       maxTodoId: 1
     };
@@ -31,6 +31,14 @@ export default class App extends Component {
   componentDidUpdate(prevProps, prevState) {
     if (this.state !== prevState) {
       saveState(this.state);
+      if (
+        this.state.inputMode !== prevState.inputMode &&
+        prevState.inputMode === InputMode.search
+      ) {
+        this.setState({
+          filteredResult: []
+        });
+      }
     }
   }
 
@@ -48,27 +56,41 @@ export default class App extends Component {
   handleOnSubmit(e) {
     e.preventDefault();
 
-    const { todos, maxTodoId, textValue } = this.state;
-    if (!textValue) {
-      return undefined;
+    const { todos, maxTodoId, textValue, inputMode } = this.state;
+
+    if (inputMode === InputMode.add) {
+      if (!textValue) {
+        return undefined;
+      }
+
+      let todosCopied = todos.slice();
+      let newTodoId = maxTodoId
+        ? maxTodoId + 1
+        : Math.max(...todos.map((todo) => todo.id));
+
+      const newTodo = {
+        id: newTodoId,
+        content: textValue,
+        isChecked: false
+      };
+
+      this.setState({
+        todos: [newTodo].concat(todosCopied),
+        maxTodoId: newTodoId,
+        textValue: ""
+      });
+    } else {
+      let filteredResult = todos;
+      if (textValue) {
+        filteredResult = todos.filter((todo) =>
+          todo.content.startsWith(textValue)
+        );
+      }
+      this.setState({
+        filteredResult: filteredResult,
+        textValue: ""
+      });
     }
-
-    let todosCopied = todos.slice();
-    let newTodoId = maxTodoId
-      ? maxTodoId + 1
-      : Math.max(...todos.map((todo) => todo.id));
-
-    const newTodo = {
-      id: newTodoId,
-      content: textValue,
-      isChecked: false
-    };
-
-    this.setState({
-      todos: [newTodo].concat(todosCopied),
-      maxTodoId: newTodoId,
-      textValue: ""
-    });
   }
 
   handleOnItemDelete(id) {
@@ -94,7 +116,7 @@ export default class App extends Component {
   }
 
   render() {
-    const { textValue, todos, inputMode } = this.state;
+    const { textValue, todos, filteredResult, inputMode } = this.state;
     const submitBtnText = inputMode === InputMode.add ? "add" : "search";
     const {
       handleOnTextChange,
@@ -103,6 +125,8 @@ export default class App extends Component {
       handleOnItemCheckChange,
       handleSwitchInputModeBtnClick
     } = this;
+
+    const listDataSource = inputMode === InputMode.add ? todos : filteredResult;
 
     return (
       <div className="App">
@@ -113,7 +137,7 @@ export default class App extends Component {
             onClick={handleSwitchInputModeBtnClick}
           >
             <span role="img" aria-label="search">
-              🔍
+              {inputMode === InputMode.add ? "🔍" : "➕"}
             </span>
           </button>
         </div>
@@ -124,7 +148,7 @@ export default class App extends Component {
           onTextChange={handleOnTextChange}
         />
         <TodoList
-          todos={todos}
+          todos={listDataSource}
           onItemCheckChange={handleOnItemCheckChange}
           onItemDelete={handleOnItemDelete}
         />

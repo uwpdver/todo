@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
 import TodoItem from "./TodoItem";
-import TodoItemPropTypes from "./TodoItem";
 
 export default class TodoList extends Component {
   render() {
@@ -30,7 +29,7 @@ TodoList.defaultProps = {
 };
 
 TodoList.propTypes = {
-  todos: PropTypes.arrayOf(TodoItemPropTypes).isRequired,
+  todos: PropTypes.array.isRequired,
   onItemCheckChange: PropTypes.func.isRequired,
   onItemDelete: PropTypes.func.isRequired
 };
